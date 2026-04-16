@@ -28,15 +28,17 @@
 | 하위권 | 웨스트햄, 울버햄튼 등 | 낮은 점유율 + 낮은 xG |
 
 ## 🗂️ 파일 구조
+```
 PL-DataHub/
-   📁 data/
-      └── pl_merged_2324.csv
-   📁 notebooks/
-      └── 14_장진원.ipynb
-          📄 correlation_heatmap.png
-          📄 kmeans_cluster.png
-          📄 elbow_silhouette.png
-          📄 README.md
+  📁 data/
+    └── pl_merged_2324.csv
+  📁 notebooks/
+    └── 14_장진원.ipynb
+  📄 correlation_heatmap.png
+  📄 kmeans_cluster.png
+  📄 elbow_silhouette.png
+  📄 README.md
+```
 
 ## 🛠️ 기술 스택
 Python | pandas | scikit-learn | matplotlib | seaborn | Google Colab | GitHub
