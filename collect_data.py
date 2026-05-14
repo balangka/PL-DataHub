@@ -2,14 +2,22 @@ import pandas as pd
 import boto3
 import os
 from understatapi import UnderstatClient
-
+import understatapi
+print(f"understatapi 버전: {understatapi.__version__}")
 s3 = boto3.client('s3')
 BUCKET = 'pl-datahub-data'
 
 def collect_season(season_param, season_label):
     print(f"📥 {season_label} 수집 중...")
     understat = UnderstatClient()
-    data = understat.league.get_team_data(league="EPL", season=season_param)
+    # 버전에 따라 다른 방식 시도
+    try:
+        data = understat.league.get_team_data(league="EPL", season=season_param)
+    except AttributeError:
+        try:
+            data = understat.league(league="EPL").get_team_data(season=season_param)
+        except TypeError:
+            data = understat.league("EPL").get_team_data(season_param)
     
     rows = []
     
