@@ -84,6 +84,14 @@ def collect_season(season_param, season_label):
     return df
 
 
+def calc_prob(home_rank, away_rank):
+    diff = away_rank - home_rank
+    home_win = min(max(0.35 + diff * 0.04, 0.10), 0.75)
+    away_win = min(max(0.25 - diff * 0.04, 0.10), 0.65)
+    draw     = min(max(1 - home_win - away_win, 0.15), 0.35)
+    total    = home_win + draw + away_win
+    return round(home_win/total, 2), round(draw/total, 2), round(away_win/total, 2)
+
 def collect_fixtures():
     print("📅 경기 일정 수집 중...")
     understat = UnderstatClient()
@@ -94,6 +102,10 @@ def collect_fixtures():
             match_data = understat.league(league="EPL").get_match_data(season="2025")
         except TypeError:
             match_data = understat.league("EPL").get_match_data("2025")
+
+    # 현재 시즌 팀 순위 가져오기
+    df_2526 = collect_season("2025", "25-26")
+    team_rank = dict(zip(df_2526["team"], df_2526["순위"]))
 
     rows = []
     if isinstance(match_data, dict):
@@ -112,15 +124,21 @@ def collect_fixtures():
         if not is_result:
             h = match.get("h", {})
             a = match.get("a", {})
-            forecast = match.get("forecast", {})
+            home_team = h.get("title", "") if isinstance(h, dict) else str(h)
+            away_team = a.get("title", "") if isinstance(a, dict) else str(a)
+
+            # 예측 모델로 확률 계산
+            home_r = team_rank.get(home_team, 10)
+            away_r = team_rank.get(away_team, 10)
+            hw, dw, aw = calc_prob(home_r, away_r)
 
             rows.append({
                 "날짜":       match.get("datetime", ""),
-                "홈팀":       h.get("title", "") if isinstance(h, dict) else str(h),
-                "원정팀":     a.get("title", "") if isinstance(a, dict) else str(a),
-                "홈승확률":   forecast.get("w", "") if isinstance(forecast, dict) else "",
-                "무승부확률": forecast.get("d", "") if isinstance(forecast, dict) else "",
-                "원정승확률": forecast.get("l", "") if isinstance(forecast, dict) else "",
+                "홈팀":       home_team,
+                "원정팀":     away_team,
+                "홈승확률":   hw,
+                "무승부확률": dw,
+                "원정승확률": aw,
             })
 
     df = pd.DataFrame(rows)
