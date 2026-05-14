@@ -1,0 +1,39 @@
+name: Update PL Data
+
+on:
+  schedule:
+    - cron: '0 15 * * *'  # 매일 한국시간 자정 (UTC 15:00)
+  workflow_dispatch:        # 수동 실행도 가능
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install understatapi pandas boto3
+
+    - name: Run data collection
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ap-northeast-2
+      run: |
+        python collect_data.py
+
+    - name: Commit updated data
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add data/pl_stats_2526.csv data/pl_fixtures_2526.csv
+        git diff --staged --quiet || git commit -m "Auto update: $(date +'%Y-%m-%d')"
+        git push
