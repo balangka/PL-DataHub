@@ -90,7 +90,13 @@ def collect_season(season_param, season_label):
 def collect_fixtures():
     print("📅 경기 일정 수집 중...")
     understat = UnderstatClient()
-    match_data = understat.league.get_match_data(league="EPL", season="2025")
+    try:
+        match_data = understat.league.get_match_data(league="EPL", season="2025")
+    except AttributeError:
+        try:
+            match_data = understat.league(league="EPL").get_match_data(season="2025")
+        except TypeError:
+            match_data = understat.league("EPL").get_match_data("2025")
     
     rows = []
     
