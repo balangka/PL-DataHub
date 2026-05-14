@@ -133,11 +133,27 @@ TEAM_LOGOS = {
 }
 
 # ── 데이터 로드 ──────────────────────────────────────────────
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_data():
-    df     = pd.read_csv("pl_stats_clustered.csv")
-    df_cur = pd.read_csv("pl_stats_2526.csv")
-    df_fix = pd.read_csv("pl_fixtures_2526.csv")
+    import boto3, io
+    s3 = boto3.client("s3", region_name="ap-northeast-2")
+    BUCKET = "pl-datahub-data"
+    def read_s3(key, fallback):
+        try:
+            obj = s3.get_object(Bucket=BUCKET, Key=key)
+            return pd.read_csv(io.BytesIO(obj["Body"].read()))
+        except:
+            return pd.read_csv(fallback)
+    df     = read_s3("pl_stats_clustered.csv", "pl_stats_clustered.csv")
+    df_cur = read_s3("pl_stats_2526.csv", "pl_stats_2526.csv")
+    df_fix = read_s3("pl_fixtures_2526.csv", "pl_fixtures_2526.csv")
+
+    # 컬럼명 통일 (영어 → 한국어)
+    if "team" in df_cur.columns:
+        df_cur = df_cur.rename(columns={"team": "팀", "season": "시즌"})
+    if "team" in df.columns:
+        df = df.rename(columns={"team": "팀", "season": "시즌"})
+
     df_fix["날짜"] = pd.to_datetime(df_fix["날짜"]) + pd.Timedelta(hours=9)
     return df, df_cur, df_fix
 
@@ -498,9 +514,19 @@ elif tab == "⚽ 경기 일정 & 예측":
             time_str = row["날짜"].strftime("%H:%M")
 
             def prob_color(p):
-                if p >= 0.5: return "#ef4444"
-                elif p >= 0.3: return "#00ff87"
-                else: return "#38bdf8"
+                try:
+                    p = float(p)
+                    if p >= 0.5: return "#ef4444"
+                    elif p >= 0.3: return "#00ff87"
+                    else: return "#38bdf8"
+                except:
+                    return "rgba(255,255,255,0.5)"
+
+            def safe_prob(p):
+                try:
+                    return f"{int(float(p)*100)}%"
+                except:
+                    return "N/A"
 
             c1,c2,c3,c4,c5,c6,c7 = st.columns([0.5,2,1,1,1,2,0.5])
             c1.markdown(f"<div style='padding-top:6px;font-size:11px;color:white;font-weight:600'>{time_str}</div>", unsafe_allow_html=True)
@@ -510,9 +536,9 @@ elif tab == "⚽ 경기 일정 & 예측":
                 hc1.image(home_logo, width=24)
             hc2.markdown(f"<div style='padding-top:4px;font-size:11px;font-weight:600;color:white'>{row['홈팀']}</div>", unsafe_allow_html=True)
 
-            c3.markdown(f"<div style='padding-top:6px;color:{prob_color(row['홈승확률'])};font-weight:700'>{int(row['홈승확률']*100)}%</div>", unsafe_allow_html=True)
-            c4.markdown(f"<div style='padding-top:6px;color:{prob_color(row['무승부확률'])};font-weight:700'>{int(row['무승부확률']*100)}%</div>", unsafe_allow_html=True)
-            c5.markdown(f"<div style='padding-top:6px;color:{prob_color(row['원정승확률'])};font-weight:700'>{int(row['원정승확률']*100)}%</div>", unsafe_allow_html=True)
+            c3.markdown(f"<div style='padding-top:6px;color:{prob_color(row['홈승확률'])};font-weight:700'>{safe_prob(row['홈승확률'])}</div>", unsafe_allow_html=True)
+            c4.markdown(f"<div style='padding-top:6px;color:{prob_color(row['무승부확률'])};font-weight:700'>{safe_prob(row['무승부확률'])}</div>", unsafe_allow_html=True)
+            c5.markdown(f"<div style='padding-top:6px;color:{prob_color(row['원정승확률'])};font-weight:700'>{safe_prob(row['원정승확률'])}</div>", unsafe_allow_html=True)
 
             ac1,ac2 = c6.columns([0.3,0.7])
             if away_logo:
@@ -557,7 +583,10 @@ elif tab == "⚽ 경기 일정 & 예측":
         away_logo = TEAM_LOGOS.get(away_team, "")
         is_home = home_team == selected_team
         win_prob = row["홈승확률"] if is_home else row["원정승확률"]
-        win_pct = int(win_prob * 100)
+        try:
+            win_pct = int(float(win_prob) * 100)
+        except:
+            win_pct = 0
         win_color = "#00ff87" if win_pct >= 50 else "#fb923c"
 
         st.markdown(f"<div style='font-size:11px;color:rgba(255,255,255,0.5);margin:16px 0 8px'>📅 {row['날짜'].strftime('%Y-%m-%d %H:%M')} (한국시간)</div>", unsafe_allow_html=True)
@@ -571,9 +600,18 @@ elif tab == "⚽ 경기 일정 & 예측":
         if away_logo:
             mc5.image(away_logo, width=55)
 
-        hw = int(row['홈승확률']*100)
-        dw = int(row['무승부확률']*100)
-        aw = int(row['원정승확률']*100)
+        try:
+            hw = int(float(row['홈승확률'])*100)
+        except:
+            hw = 0
+        try:
+            dw = int(float(row['무승부확률'])*100)
+        except:
+            dw = 0
+        try:
+            aw = int(float(row['원정승확률'])*100)
+        except:
+            aw = 0
         pc1,pc2,pc3 = st.columns(3)
        # 확률 순위로 색상 결정
         probs = {"home": hw, "draw": dw, "away": aw}
