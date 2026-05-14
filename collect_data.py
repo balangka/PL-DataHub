@@ -1,22 +1,32 @@
 import pandas as pd
-import numpy as np
 import boto3
 import os
 from understatapi import UnderstatClient
 
-# S3 클라이언트
 s3 = boto3.client('s3')
 BUCKET = 'pl-datahub-data'
 
 def collect_season(season_param, season_label):
     print(f"📥 {season_label} 수집 중...")
     understat = UnderstatClient()
-    data = understat.league(league="EPL").get_team_data(season=season_param)
+    data = understat.league.get_team_data(league="EPL", season=season_param)
     
     rows = []
-    for _, row in data.iterrows():
-        team_name = row.name
-        history = row.get("history", [])
+    
+    # dict 형태로 처리
+    if isinstance(data, dict):
+        items = data.items()
+    else:
+        items = [(row.name, row) for _, row in data.iterrows()]
+    
+    for team_name, team_info in items:
+        if isinstance(team_info, dict):
+            history = team_info.get("history", [])
+            name = team_info.get("title", team_name)
+        else:
+            history = team_info.get("history", [])
+            name = team_name
+        
         if not history:
             continue
         
@@ -43,7 +53,7 @@ def collect_season(season_param, season_label):
         losses = sum(int(m.get("loses", 0)) for m in history)
         
         rows.append({
-            "team":     team_name,
+            "team":     name,
             "season":   season_label,
             "xG":       round(xG_total, 2),
             "xGA":      round(xGA_total, 2),
@@ -58,7 +68,6 @@ def collect_season(season_param, season_label):
             "패":       losses,
         })
     
-    # 득실차 기준 순위 계산
     df = pd.DataFrame(rows)
     df["득실차"] = df["실제득점"] - df["실제실점"]
     df = df.sort_values(
@@ -73,18 +82,33 @@ def collect_season(season_param, season_label):
 def collect_fixtures():
     print("📅 경기 일정 수집 중...")
     understat = UnderstatClient()
-    match_data = understat.league(league="EPL").get_match_data(season="2025")
+    match_data = understat.league.get_match_data(league="EPL", season="2025")
     
     rows = []
-    for _, match in match_data.iterrows():
-        if not match.get("isResult", False):
+    
+    if isinstance(match_data, dict):
+        matches = match_data.values()
+    else:
+        matches = [row for _, row in match_data.iterrows()]
+    
+    for match in matches:
+        if isinstance(match, dict):
+            is_result = match.get("isResult", False)
+        else:
+            is_result = match.get("isResult", False)
+        
+        if not is_result:
+            h = match.get("h", {})
+            a = match.get("a", {})
+            forecast = match.get("forecast", {})
+            
             rows.append({
                 "날짜":       match.get("datetime", ""),
-                "홈팀":       match.get("h", {}).get("title", "") if isinstance(match.get("h"), dict) else "",
-                "원정팀":     match.get("a", {}).get("title", "") if isinstance(match.get("a"), dict) else "",
-                "홈승확률":   match.get("forecast", {}).get("w", "") if isinstance(match.get("forecast"), dict) else "",
-                "무승부확률": match.get("forecast", {}).get("d", "") if isinstance(match.get("forecast"), dict) else "",
-                "원정승확률": match.get("forecast", {}).get("l", "") if isinstance(match.get("forecast"), dict) else "",
+                "홈팀":       h.get("title", "") if isinstance(h, dict) else "",
+                "원정팀":     a.get("title", "") if isinstance(a, dict) else "",
+                "홈승확률":   forecast.get("w", "") if isinstance(forecast, dict) else "",
+                "무승부확률": forecast.get("d", "") if isinstance(forecast, dict) else "",
+                "원정승확률": forecast.get("l", "") if isinstance(forecast, dict) else "",
             })
     
     df = pd.DataFrame(rows)
@@ -107,12 +131,10 @@ def save_to_github(df, filepath):
     print(f"✅ GitHub 저장: {filepath}")
 
 if __name__ == "__main__":
-    # 25-26 현재 시즌 수집
     df_2526 = collect_season("2025", "25-26")
     save_to_s3(df_2526, "pl_stats_2526.csv")
     save_to_github(df_2526, "data/pl_stats_2526.csv")
     
-    # 경기 일정 수집
     df_fix = collect_fixtures()
     save_to_s3(df_fix, "pl_fixtures_2526.csv")
     save_to_github(df_fix, "data/pl_fixtures_2526.csv")
