@@ -98,10 +98,12 @@ def collect_fixtures():
         except TypeError:
             match_data = understat.league("EPL").get_match_data("2025")
     
-    rows = []
+   rows = []
     
     if isinstance(match_data, dict):
         matches = match_data.values()
+    elif isinstance(match_data, list):
+        matches = match_data
     else:
         matches = [row for _, row in match_data.iterrows()]
     
