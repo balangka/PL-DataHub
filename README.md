@@ -101,12 +101,14 @@
 ---
 
 ## 🏗️ 시스템 아키텍처
-GitHub Actions (매일 자정 KST)
-↓ Understat 데이터 자동 수집
-↓ AWS S3 저장
-AWS EC2 (Streamlit 호스팅)
-↓ S3에서 실시간 데이터 로드 (1시간 캐싱)
-↓ 대시보드 표시
+
+| 단계 | 서비스 | 역할 |
+|------|--------|------|
+| 1️⃣ 수집 | GitHub Actions | 매일 자정(KST) Understat 자동 수집 |
+| 2️⃣ 저장 | AWS S3 | CSV 파일 저장 및 관리 |
+| 3️⃣ 호스팅 | AWS EC2 | Streamlit 앱 24/7 운영 |
+| 4️⃣ 갱신 | Cache (1h) | S3 데이터 1시간마다 자동 갱신 |
+
 ---
 
 ## 📱 대시보드 구성
@@ -131,28 +133,33 @@ AWS EC2 (Streamlit 호스팅)
 ---
 
 ## 🛠️ 기술 스택
-Python 3.11
-├── Streamlit (대시보드)
-├── Pandas / NumPy (데이터 처리)
-├── Scikit-learn (머신러닝)
-├── Scipy / Statsmodels (통계 분석)
-├── Matplotlib (시각화)
-└── Understatapi (데이터 수집)
-AWS
-├── EC2 (서버 호스팅)
-└── S3 (데이터 저장)
-GitHub Actions (자동화)
+
+### Python
+| 라이브러리 | 용도 |
+|-----------|------|
+| Streamlit | 대시보드 구현 |
+| Pandas / NumPy | 데이터 처리 |
+| Scikit-learn | 머신러닝 (K-means, Random Forest) |
+| Scipy / Statsmodels | 통계 분석 (Pearson, Spearman, VIF) |
+| Matplotlib | 시각화 |
+| Understatapi | 데이터 수집 |
+
+### Infrastructure
+| 서비스 | 용도 |
+|--------|------|
+| AWS EC2 | Streamlit 서버 호스팅 |
+| AWS S3 | 데이터 파일 저장 |
+| GitHub Actions | 데이터 자동 수집 파이프라인 |
+
 ---
 
 ## 📁 파일 구조
-PL-DataHub/
-├── app.py                    # Streamlit 대시보드
-├── collect_data.py           # 데이터 수집 스크립트
-├── data/
-│   ├── pl_stats_2526.csv    # 현재 시즌 (자동 업데이트)
-│   └── pl_fixtures_2526.csv # 경기 일정 (자동 업데이트)
-├── notebooks/
-│   └── 14_장진원.ipynb      # 분석 노트북
-└── .github/
-└── workflows/
-└── update_data.yml  # GitHub Actions
+
+| 파일/폴더 | 설명 |
+|----------|------|
+| `app.py` | Streamlit 대시보드 메인 |
+| `collect_data.py` | GitHub Actions 데이터 수집 스크립트 |
+| `data/pl_stats_2526.csv` | 25-26 현재 시즌 통계 (매일 자동 업데이트) |
+| `data/pl_fixtures_2526.csv` | 경기 일정 및 예측 확률 (매일 자동 업데이트) |
+| `notebooks/14_장진원.ipynb` | 전체 분석 노트북 |
+| `.github/workflows/update_data.yml` | GitHub Actions 자동화 설정 |
