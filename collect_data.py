@@ -20,6 +20,8 @@ def collect_season(season_param, season_label):
     rows = []
     if isinstance(data, dict):
         items = data.items()
+    elif isinstance(data, list):
+        items = [(item.get("title", ""), item) for item in data]
     else:
         items = [(row.name, row) for _, row in data.iterrows()]
 
