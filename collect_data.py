@@ -101,7 +101,7 @@ def collect_fixtures():
         try:
             match_data = understat.league(league="EPL").get_match_data(season="2025")
         except TypeError:
-            match_data = understat.league("EPL").get_match_data("2025")
+            match_data = understat.league("EPL").get_match_data("2026")
 
     # 현재 시즌 팀 순위 가져오기
     df_2526 = collect_season("2025", "25-26")
