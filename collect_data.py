@@ -75,6 +75,11 @@ def collect_season(season_param, season_label):
         })
 
     df = pd.DataFrame(rows)
+    
+    if df.empty:
+        print(f"⚠️ {season_label} 시즌 데이터 없음 (아직 시작 전)")
+        return df
+    
     df["득실차"] = df["실제득점"] - df["실제실점"]
     df = df.sort_values(
         ["실제승점", "득실차", "실제득점"],
