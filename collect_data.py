@@ -164,11 +164,13 @@ def save_to_github(df, filepath):
 
 
 if __name__ == "__main__":
-    df_2526 = collect_season("2025", "25-26")
-    save_to_s3(df_2526, "pl_stats_2526.csv")
-    save_to_github(df_2526, "data/pl_stats_2526.csv")
+    # 26-27 현재 시즌 수집
+    df_2627 = collect_season("2026", "26-27")
+    save_to_s3(df_2627, "pl_stats_2526.csv")
+    save_to_github(df_2627, "data/pl_stats_2526.csv")
 
-    df_fix = collect_fixtures()
+    # 26-27 경기 일정 수집
+    df_fix = collect_fixtures_by_season("2026")
     save_to_s3(df_fix, "pl_fixtures_2526.csv")
     save_to_github(df_fix, "data/pl_fixtures_2526.csv")
 
