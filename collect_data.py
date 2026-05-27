@@ -177,7 +177,7 @@ if __name__ == "__main__":
     save_to_github(df_2627, "data/pl_stats_2526.csv")
 
     # 26-27 경기 일정 수집
-    df_fix = collect_fixtures_by_season("2026")
+    df_fix = collect_fixtures()
     save_to_s3(df_fix, "pl_fixtures_2526.csv")
     save_to_github(df_fix, "data/pl_fixtures_2526.csv")
 
