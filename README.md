@@ -1,7 +1,7 @@
 # ⚽ PL DataHub
 > 프리미어리그 팀 전술 스타일 분석 및 경기 결과 예측 대시보드
 
-[![Streamlit](https://img.shields.io/badge/Streamlit-Live-brightgreen)](http://3.39.23.159:8501)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Live-brightgreen)](http://52.78.187.48:8501/)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/balangka/PL-DataHub)
 
 ---
