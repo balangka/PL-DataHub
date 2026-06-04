@@ -108,8 +108,10 @@
 |----------|------|
 | `app.py` | Streamlit 대시보드 메인 |
 | `collect_data.py` | GitHub Actions 데이터 수집 스크립트 |
-| `data/pl_stats_2526.csv` | 25-26 현재 시즌 통계 (매일 자동 업데이트) |
-| `data/pl_fixtures_2526.csv` | 경기 일정 및 예측 확률 (매일 자동 업데이트) |
+| `data/pl_stats_clustered.csv` | 5시즌(21-22~25-26) 전체 팀 전술 지표 + K-means 군집 결과 |
+| `data/pl_stats_4seasons.csv` | 4시즌(21-22~24-25) 분석/학습용 데이터 |
+| `data/pl_stats_2526.csv` | 26-27 현재 시즌 통계 (매일 자동 업데이트) |
+| `data/pl_fixtures_2526.csv` | 26-27 경기 일정 및 예측 확률 (매일 자동 업데이트) |
 | `notebooks/14_장진원.ipynb` | 전체 분석 노트북 |
 | `.github/workflows/update_data.yml` | GitHub Actions 자동화 설정 |
 
